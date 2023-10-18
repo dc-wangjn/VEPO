@@ -1,0 +1,23 @@
+from Competing_TRPO.BEAR2 import bear_qlearner
+from Competing_TRPO.BEAR2 import bear_model
+from Competing_TRPO.BEAR2 import utils as utils2
+bear_models = bear_model.BEAR_model(num_actions = 5)
+
+buffer_model = bear_model.VAE(num_actions = 5)
+
+replay_buffer = utils2.ReplayBuffer(state_dim= 3, action_dim=1)
+ohio = OhioSimulator(sd_G = 3, T = 20, N = 10)
+trajs = ohio.simu_one_seed(1)
+flatten_traj = sum(trajs, [])
+for tup in flatten_traj:
+    replay_buffer.add(tup)
+FLAGS = {"sigma" : 1, "kernel" : "lp", "seed" : 42, "logdir" : '/' + 'logdir'}
+
+
+bear = bear_qlearner.BEAR_qlearner(model = bear_model, buffer_model = buffer_model
+                                            , FLAGS = FLAGS, buffer = replay_buffer
+                              , graph_args = {'p': 5, 'm': 100, 'n': 100, 'lr': 1e-3, 'batch_size': int(32), 'lambda':0.75,
+                                                                                       'eval_freq': int(1e3), 'var_lambda':0.4, 
+                                                                                       'eps':0.05,'tau':5e-3, 'gamma':0.99,})
+
+bear.train(iterations = 10)
